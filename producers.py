@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import Executor
 from threading import Thread
 
 import confluent_kafka
@@ -8,19 +9,24 @@ from settings import KAFKA_BOOSTRAP_SERVERS
 
 
 class Producer:
-    def __init__(self, configs):
+    def __init__(self, configs, executor: Executor):
         self._producer = confluent_kafka.Producer(configs)
         self._cancelled = False
-        self._poll_thread = Thread(target=self._poll_loop, daemon=True)
-        self._poll_thread.start()
+        self.executor = executor
+
+    def start(self):
+        self._pool_task = self.executor.submit(self._poll_loop)
 
     def _poll_loop(self):
+        print("Starting Producer Pool Loop")
         while not self._cancelled:
             self._producer.poll(0.1)
+        print("Producer Loop Stopped")
 
     def close(self):
+        print("Shutting Down Producer")
         self._cancelled = True
-        self._poll_thread.join()
+        self._pool_task.result(2)
 
     def produce(self, topic, value, key, on_delivery=None):
         self._producer.produce(
@@ -45,9 +51,14 @@ async def async_produce(topic, value, key):
 
 producer: Producer = None
 
-def start_producer():
+def start_producer(executor):
     global producer
 
     if producer is None:
-        producer = Producer({'bootstrap.servers': KAFKA_BOOSTRAP_SERVERS,})
+        producer = Producer({'bootstrap.servers': KAFKA_BOOSTRAP_SERVERS,}, executor)
+        producer.start()
     return producer
+
+def stop_producer():
+    if producer is not None:
+        producer.close()

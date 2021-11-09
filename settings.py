@@ -1,5 +1,4 @@
-from decouple import config
-
+from decouple import config, Csv
 
 KAFKA_BOOSTRAP_SERVERS = config('KAFKA_BOOSTRAP_SERVERS')
 CONSUMER_GROUP_ID = config('CONSUMER_GROUP_ID', default='devices_service')
