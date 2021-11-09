@@ -1,0 +1,13 @@
+asgiref==3.4.1
+click==8.0.1
+confluent-kafka==1.7.0
+fastapi==0.68.0
+h11==0.12.0
+importlib-metadata==4.6.4
+pydantic==1.8.2
+python-decouple==3.4
+pytz==2021.1
+starlette==0.14.2
+typing-extensions==3.10.0.0
+uvicorn==0.15.0
+zipp==3.5.0
