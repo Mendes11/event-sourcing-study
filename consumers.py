@@ -7,8 +7,11 @@ from typing import List
 from confluent_kafka import Consumer as ConfluentConsumer, Message, \
     TopicPartition, OFFSET_BEGINNING, OFFSET_INVALID, KafkaException
 
+from confluent_kafka.admin import AdminClient
+from confluent_kafka.cimpl import NewTopic
+
 from db import get_db
-from settings import KAFKA_BOOSTRAP_SERVERS, CONSUMER_GROUP_ID, \
+from settings import KAFKA_BOOTSRAP_SERVERS, CONSUMER_GROUP_ID, \
     DEVICES_TOPIC, DEVICES_INPUT_TOPIC
 
 
@@ -16,6 +19,7 @@ class Consumer:
     def __init__(self, config, executor: Executor, messages_batch=5):
         self.canceled = False
         self._consumer = ConfluentConsumer(config)
+        self._admin = AdminClient(config)
         self.messages_batch = messages_batch
         self.subscriptions = defaultdict(set) # Event, Targets
         self.ready = False
@@ -60,8 +64,16 @@ class Consumer:
             if not self.ready:
                 self.check_ready()
         print("Consumer Loop Stopped")
+    def _create_topic(self, topic):
+        if topic not in self._admin.list_topics().topics:
+            futures = self._admin.create_topics([
+                NewTopic(topic, num_partitions=5)
+            ])
+            for f in futures.values():
+                f.result()
 
     def add_subscription(self, topic, callback):
+        self._create_topic(topic)
         self.subscriptions[topic].add(callback)
 
     def start(self):
@@ -97,7 +109,7 @@ def start_consumer(executor):
     db = get_db()
     if consumer is None:
         consumer = Consumer({
-            'bootstrap.servers': KAFKA_BOOSTRAP_SERVERS,
+            'bootstrap.servers': KAFKA_BOOTSRAP_SERVERS,
             'group.id': CONSUMER_GROUP_ID,
             'auto.offset.reset': 'earliest'
         }, executor)

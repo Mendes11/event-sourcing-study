@@ -1,3 +1,4 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 
 import uvicorn
@@ -6,15 +7,22 @@ from consumers import start_consumer, stop_consumer
 from producers import start_producer, stop_producer
 from routers import device
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(message)s")
+
 app = FastAPI()
 
 app.include_router(device.router)
 
 
 if __name__ == "__main__":
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        start_producer(executor)
-        start_consumer(executor)
-        uvicorn.run(app)
-        stop_consumer()
+    try:
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            start_consumer(executor)
+            start_producer(executor)
+            uvicorn.run(app)
+    except Exception:
+        logger.exception("Exception Raised")
+    finally:
         stop_producer()
+        stop_consumer()

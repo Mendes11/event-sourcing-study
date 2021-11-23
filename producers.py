@@ -5,7 +5,7 @@ from threading import Thread
 import confluent_kafka
 from confluent_kafka import KafkaException
 
-from settings import KAFKA_BOOSTRAP_SERVERS
+from settings import KAFKA_BOOTSRAP_SERVERS
 
 
 class Producer:
@@ -55,7 +55,7 @@ def start_producer(executor):
     global producer
 
     if producer is None:
-        producer = Producer({'bootstrap.servers': KAFKA_BOOSTRAP_SERVERS,}, executor)
+        producer = Producer({'bootstrap.servers': KAFKA_BOOTSRAP_SERVERS,}, executor)
         producer.start()
     return producer
 
