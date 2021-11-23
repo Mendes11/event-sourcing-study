@@ -18,8 +18,8 @@ app.include_router(device.router)
 if __name__ == "__main__":
     try:
         with ThreadPoolExecutor(max_workers=4) as executor:
-            # start_consumer(executor)
-            # start_producer(executor)
+            start_consumer(executor)
+            start_producer(executor)
             uvicorn.run(app, host="0.0.0.0")
     except Exception:
         logger.exception("Exception Raised")
